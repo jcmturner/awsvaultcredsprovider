@@ -51,7 +51,7 @@ func NewClient(conf *Config, creds *Credentials) (Client, error) {
 		creds.ReadUserID()
 	}
 	var s Session
-	err := s.NewRequest(*conf.ReSTClientConfig, creds.AppID, creds.UserID)
+	err := s.NewRequest(conf.ReSTClientConfig, creds.AppID, creds.UserID)
 	if err != nil {
 		return Client{}, fmt.Errorf("Error creating Vault login request object: %v", err)
 	}
@@ -67,7 +67,7 @@ func NewClient(conf *Config, creds *Credentials) (Client, error) {
 	return Client{
 		credentials: creds,
 		config:      conf,
-		session:     s,
+		session:     &s,
 	}, nil
 }
 
@@ -94,7 +94,7 @@ func (c *Client) Write(p string, m map[string]interface{}) error {
 	// Refresh the access token to the vault is needs be
 	token, err := c.session.GetToken()
 	if err != nil {
-		return m, fmt.Errorf("Error getting login token to the Vault: %v", err)
+		return fmt.Errorf("Error getting login token to the Vault: %v", err)
 	}
 	c.config.APIClient.SetToken(token)
 	logical := c.config.APIClient.Logical()

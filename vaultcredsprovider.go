@@ -10,12 +10,7 @@ const (
 	PROVIDER_NAME = "VaultCredsProvider"
 )
 
-//{
-//"SecretAccessKey": "9drTJvcXLB89EXAMPLELB8923FB892xMFI",
-//"SessionToken": "AQoXdzELDDY//////////wEaoAK1wvxJY12r2IrDFT2IvAzTCn3zHoZ7YNtpiQLF0MqZye/qwjzP2iEXAMPLEbw/m3hsj8VBTkPORGvr9jM5sgP+w9IZWZnU+LWhmg+a5fDi2oTGUYcdg9uexQ4mtCHIHfi4citgqZTgco40Yqr4lIlo4V2b2Dyauk0eYFNebHtYlFVgAUj+7Indz3LU0aTWk1WKIjHmmMCIoTkyYp/k7kUG7moeEYKSitwQIi6Gjn+nyzM+PtoA3685ixzv0R7i5rjQi0YE0lf1oeie3bDiNHncmzosRM6SFiPzSvp6h/32xQuZsjcypmwsPSDtTPYcs0+YN/8BRi2/IcrxSpnWEXAMPLEXSDFTAQAM6Dl9zR0tXoybnlrZIwMLlMi1Kcgo5OytwU=",
-//"Expiration": "2016-03-15T00:05:07Z",
-//"AccessKeyId": "ASIAJEXAMPLEXEG2JICEA"
-//}
+
 type AWSCredential struct {
 	AccessKeyId     string
 	SecretAccessKey string
@@ -40,11 +35,14 @@ func (p *VaultCredsProvider) Retrieve() (credentials.Value, error) {
 		SecretAccessKey: p.Credential.SecretAccessKey,
 		SessionToken:    p.Credential.SessionToken,
 		ProviderName:    PROVIDER_NAME,
-	}
-
+	}, nil
 }
 
 func (p *VaultCredsProvider) IsExpired() bool {
+	// Setting TTL to <0 will cause the cache to never be used as will always be expired
+	if p.Credential.TTL < 0 {
+		return true
+	}
 	if time.Now().UTC().After(p.Credential.Expiration) {
 		return true
 	}
@@ -80,8 +78,8 @@ func (p *VaultCredsProvider) Read() error {
 		p.Credential.Expiration = v.(time.Time)
 	}
 	if v, ok := m["TTL"]; ok {
-		if v.(int) && v.(int) > 0 {
-			t := time.Now().UTC().Add(time.Duration(v.(int)) * time.Second)
+		if ttl, ok := v.(int); ok {
+			t := time.Now().UTC().Add(time.Duration(ttl) * time.Second)
 			if p.Credential.Expiration.After(t) {
 				p.Credential.Expiration = t
 			}

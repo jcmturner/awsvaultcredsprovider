@@ -1,7 +1,7 @@
 package vault
 
 import (
-	"github.com/jcmturner/mfaserver/testtools"
+	"github.com/jcmturner/vaultmock"
 	"github.com/jcmturner/restclient"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -16,7 +16,7 @@ func TestLogin_NewRequest(t *testing.T) {
 }
 
 func TestLogin_Process(t *testing.T) {
-	ln, addr, test_app_id, test_user_id := testtools.RunMockVault(t)
+	ln, addr, test_app_id, test_user_id := vaultmock.RunMockVault(t)
 	defer ln.Close()
 	c := restclient.NewConfig().WithEndPoint(addr)
 	var l Session
@@ -26,7 +26,7 @@ func TestLogin_Process(t *testing.T) {
 }
 
 func TestLogin_GetToken(t *testing.T) {
-	ln, addr, test_app_id, test_user_id := testtools.RunMockVault(t)
+	ln, addr, test_app_id, test_user_id := vaultmock.RunMockVault(t)
 	defer ln.Close()
 	c := restclient.NewConfig().WithEndPoint(addr)
 	var l Session
