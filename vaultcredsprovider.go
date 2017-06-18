@@ -10,7 +10,6 @@ const (
 	PROVIDER_NAME = "VaultCredsProvider"
 )
 
-
 type AWSCredential struct {
 	AccessKeyId     string
 	SecretAccessKey string
@@ -23,6 +22,17 @@ type VaultCredsProvider struct {
 	VaultClient *vault.Client
 	Arn         string
 	Credential  AWSCredential
+}
+
+func NewVaultCredsProvider(arn string, conf vault.Config, creds vault.Credentials) (VaultCredsProvider, error) {
+	cl, err := vault.NewClient(&conf, &creds)
+	if err != nil {
+		return VaultCredsProvider{}, err
+	}
+	return VaultCredsProvider{
+		VaultClient: &cl,
+		Arn:         arn,
+	}, nil
 }
 
 func (p *VaultCredsProvider) Retrieve() (credentials.Value, error) {
@@ -49,7 +59,7 @@ func (p *VaultCredsProvider) IsExpired() bool {
 	return false
 }
 
-func (p *VaultCredsProvider) Store(arn string) error {
+func (p *VaultCredsProvider) Store() error {
 	m := map[string]interface{}{
 		"AccessKeyID":     p.Credential.AccessKeyId,
 		"SecretAccessKey": p.Credential.SecretAccessKey,
@@ -57,7 +67,7 @@ func (p *VaultCredsProvider) Store(arn string) error {
 		"Expiration":      p.Credential.Expiration,
 		"TTL":             p.Credential.TTL,
 	}
-	return p.VaultClient.Write(arn, m)
+	return p.VaultClient.Write(p.Arn, m)
 }
 
 func (p *VaultCredsProvider) Read() error {
@@ -75,7 +85,9 @@ func (p *VaultCredsProvider) Read() error {
 		p.Credential.SessionToken = v.(string)
 	}
 	if v, ok := m["Expiration"]; ok {
-		p.Credential.Expiration = v.(time.Time)
+		if p.Credential.Expiration, err = time.Parse(time.RFC3339, v.(string)); err != nil {
+			p.Credential.Expiration = time.Now().UTC()
+		}
 	}
 	if v, ok := m["TTL"]; ok {
 		if ttl, ok := v.(int); ok {
