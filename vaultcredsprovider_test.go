@@ -67,3 +67,61 @@ func TestVaultCredsProvider_StoreAndReadBack(t *testing.T) {
 	assert.Equal(t, cred.SessionToken, pr.Credential.SessionToken, "SessionToken not as expected")
 	assert.Equal(t, cred.SecretAccessKey, pr.Credential.SecretAccessKey, "SecretAccessKey not as expected")
 }
+
+func TestVaultCredsProvider_IsExpired(t *testing.T) {
+	p := VaultCredsProvider{}
+	p.Credential = AWSCredential{
+		SecretAccessKey: Test_SecretAccessKey,
+		SessionToken:    Test_SessionToken,
+		AccessKeyId:     Test_AccessKeyId,
+	}
+	p.Credential.Expiration = time.Now().UTC().Add(time.Hour)
+	assert.False(t, p.IsExpired(), "IsExpired stating credential is expired when it isn't")
+	p.Credential.Expiration = time.Now().UTC().Add(time.Hour * -1)
+	assert.True(t, p.IsExpired(), "IsExpired does not recognise credential is expired")
+	p.Credential.TTL = -1
+	assert.True(t, p.IsExpired(), "IsExpired should always be true when TTL < 0")
+}
+
+func TestVaultCredsProvider_Retrieve(t *testing.T) {
+	s, addr, certPool, test_app_id, test_user_id := vaultmock.RunMockVault(t)
+	defer s.Close()
+	c := restclient.NewConfig().WithEndPoint(addr).WithCACertPool(certPool)
+	vconf := vault.Config{
+		SecretsPath:      Test_SecretsPath,
+		ReSTClientConfig: *c,
+	}
+	vcreds := vault.Credentials{
+		UserID: test_user_id,
+		AppID:  test_app_id,
+	}
+	p, err := NewVaultCredsProvider(Test_Arn, vconf, vcreds)
+	if err != nil {
+		t.Fatalf("Error creating VaultCredsProvider: %v", err)
+	}
+
+	xt, err := time.Parse(time.RFC3339, Test_Expiration)
+	if err != nil {
+		t.Logf("Error parsing test expiry time: %v", err)
+	}
+	cred := AWSCredential{
+		SecretAccessKey: Test_SecretAccessKey,
+		SessionToken:    Test_SessionToken,
+		AccessKeyId:     Test_AccessKeyId,
+		Expiration:      xt,
+	}
+	p.Credential = cred
+
+	// Store
+	err = p.Store()
+	if err != nil {
+		t.Fatalf("Failed to store AWS credential: %v", err)
+	}
+
+	v, err := p.Retrieve()
+	if err != nil {
+		t.Fatalf("Error retrieving credentials: %v", err)
+	}
+	assert.Equal(t, PROVIDER_NAME, v.ProviderName, "Provider name not as expected")
+	assert.Equal(t, cred.AccessKeyId, v.AccessKeyID, "AccessKeyId not as expected")
+}

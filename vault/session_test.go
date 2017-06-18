@@ -1,8 +1,8 @@
 package vault
 
 import (
-	"github.com/jcmturner/vaultmock"
 	"github.com/jcmturner/restclient"
+	"github.com/jcmturner/vaultmock"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -16,9 +16,9 @@ func TestLogin_NewRequest(t *testing.T) {
 }
 
 func TestLogin_Process(t *testing.T) {
-	ln, addr, test_app_id, test_user_id := vaultmock.RunMockVault(t)
-	defer ln.Close()
-	c := restclient.NewConfig().WithEndPoint(addr)
+	s, addr, cp, test_app_id, test_user_id := vaultmock.RunMockVault(t)
+	defer s.Close()
+	c := restclient.NewConfig().WithEndPoint(addr).WithCACertPool(cp)
 	var l Session
 	l.NewRequest(c, test_app_id, test_user_id)
 	err := l.process()
@@ -26,9 +26,9 @@ func TestLogin_Process(t *testing.T) {
 }
 
 func TestLogin_GetToken(t *testing.T) {
-	ln, addr, test_app_id, test_user_id := vaultmock.RunMockVault(t)
-	defer ln.Close()
-	c := restclient.NewConfig().WithEndPoint(addr)
+	s, addr, cp, test_app_id, test_user_id := vaultmock.RunMockVault(t)
+	defer s.Close()
+	c := restclient.NewConfig().WithEndPoint(addr).WithCACertPool(cp)
 	var l Session
 	l.NewRequest(c, test_app_id, test_user_id)
 	token, err := l.GetToken()
