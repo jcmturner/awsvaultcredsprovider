@@ -1,4 +1,4 @@
-package vault
+package awsvaultcredsprovider
 
 import (
 	"github.com/jcmturner/awsvaultcredsprovider/vault"

@@ -1,4 +1,4 @@
-package vault
+package awsvaultcredsprovider
 
 import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
