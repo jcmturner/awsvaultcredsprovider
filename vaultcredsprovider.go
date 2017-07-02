@@ -14,6 +14,8 @@ type AWSCredential struct {
 	AccessKeyId     string
 	SecretAccessKey string
 	SessionToken    string
+	MFASerialNumber string
+	MFASecret       string
 	Expiration      time.Time
 	TTL             int
 }
@@ -64,6 +66,8 @@ func (p *VaultCredsProvider) Store() error {
 		"AccessKeyID":     p.Credential.AccessKeyId,
 		"SecretAccessKey": p.Credential.SecretAccessKey,
 		"SessionToken":    p.Credential.SessionToken,
+		"MFASerialNumber": p.Credential.MFASerialNumber,
+		"MFASecret":       p.Credential.MFASecret,
 		"Expiration":      p.Credential.Expiration,
 		"TTL":             p.Credential.TTL,
 	}
@@ -83,6 +87,12 @@ func (p *VaultCredsProvider) Read() error {
 	}
 	if v, ok := m["SessionToken"]; ok {
 		p.Credential.SessionToken = v.(string)
+	}
+	if v, ok := m["MFASerialNumber"]; ok {
+		p.Credential.MFASerialNumber = v.(string)
+	}
+	if v, ok := m["MFASecret"]; ok {
+		p.Credential.MFASecret = v.(string)
 	}
 	if v, ok := m["Expiration"]; ok {
 		if p.Credential.Expiration, err = time.Parse(time.RFC3339, v.(string)); err != nil {
