@@ -8,15 +8,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/jcmturner/awsvaultcredsprovider/vault"
 	"github.com/jcmturner/gootp"
+	"github.com/jcmturner/vaultclient"
 	"time"
-	"fmt"
-	"os"
 )
 
 const (
-	PROVIDER_NAME = "VaultCredsProvider"
+	PROVIDER_NAME                  = "VaultCredsProvider"
 	DefaultTempCredentialsDuration = 900
 )
 
@@ -31,13 +29,13 @@ type AWSCredential struct {
 }
 
 type VaultCredsProvider struct {
-	VaultClient *vault.Client
+	VaultClient *vaultclient.Client
 	Arn         string
 	Credential  AWSCredential
 }
 
-func NewVaultCredsProvider(arn string, conf vault.Config, creds vault.Credentials) (*VaultCredsProvider, error) {
-	cl, err := vault.NewClient(&conf, &creds)
+func NewVaultCredsProvider(arn string, conf vaultclient.Config, creds vaultclient.Credentials) (*VaultCredsProvider, error) {
+	cl, err := vaultclient.NewClient(&conf, &creds)
 	if err != nil {
 		return nil, err
 	}
@@ -137,11 +135,9 @@ func (p *VaultCredsProvider) getSessionCredentials() error {
 func (p *VaultCredsProvider) IsExpired() bool {
 	// Setting TTL to <0 will cause the cache to never be used as will always be expired
 	if p.Credential.TTL < 0 {
-		fmt.Fprintf(os.Stderr, "Expired TTL: %v\n", p.Credential.TTL)
 		return true
 	}
 	if time.Now().UTC().After(p.Credential.Expiration) {
-		fmt.Fprintf(os.Stderr, "Expired: %v\n", p.Credential.Expiration)
 		return true
 	}
 	return false

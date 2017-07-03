@@ -1,8 +1,8 @@
 package awsvaultcredsprovider
 
 import (
-	"github.com/jcmturner/awsvaultcredsprovider/vault"
 	"github.com/jcmturner/restclient"
+	"github.com/jcmturner/vaultclient"
 	"github.com/jcmturner/vaultmock"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -22,11 +22,11 @@ func TestVaultCredsProvider_StoreAndReadBack(t *testing.T) {
 	s, addr, certPool, test_app_id, test_user_id := vaultmock.RunMockVault(t)
 	defer s.Close()
 	c := restclient.NewConfig().WithEndPoint(addr).WithCACertPool(certPool)
-	vconf := vault.Config{
+	vconf := vaultclient.Config{
 		SecretsPath:      Test_SecretsPath,
 		ReSTClientConfig: *c,
 	}
-	vcreds := vault.Credentials{
+	vcreds := vaultclient.Credentials{
 		UserID: test_user_id,
 		AppID:  test_app_id,
 	}
@@ -40,8 +40,8 @@ func TestVaultCredsProvider_StoreAndReadBack(t *testing.T) {
 		t.Logf("Error parsing test expiry time: %v", err)
 	}
 	cred := AWSCredential{
-		SecretAccessKey: Test_SecretAccessKey,
-		SessionToken:    Test_SessionToken,
+		secretAccessKey: Test_SecretAccessKey,
+		sessionToken:    Test_SessionToken,
 		AccessKeyId:     Test_AccessKeyId,
 		Expiration:      xt,
 	}
@@ -64,15 +64,15 @@ func TestVaultCredsProvider_StoreAndReadBack(t *testing.T) {
 	}
 	assert.Equal(t, cred.AccessKeyId, pr.Credential.AccessKeyId, "AccessKeyId not as expected")
 	assert.Equal(t, cred.Expiration, pr.Credential.Expiration, "Expiration not as expected")
-	assert.Equal(t, cred.SessionToken, pr.Credential.SessionToken, "SessionToken not as expected")
-	assert.Equal(t, cred.SecretAccessKey, pr.Credential.SecretAccessKey, "SecretAccessKey not as expected")
+	assert.Equal(t, cred.sessionToken, pr.Credential.sessionToken, "SessionToken not as expected")
+	assert.Equal(t, cred.secretAccessKey, pr.Credential.secretAccessKey, "SecretAccessKey not as expected")
 }
 
 func TestVaultCredsProvider_IsExpired(t *testing.T) {
 	p := VaultCredsProvider{}
 	p.Credential = AWSCredential{
-		SecretAccessKey: Test_SecretAccessKey,
-		SessionToken:    Test_SessionToken,
+		secretAccessKey: Test_SecretAccessKey,
+		sessionToken:    Test_SessionToken,
 		AccessKeyId:     Test_AccessKeyId,
 	}
 	p.Credential.Expiration = time.Now().UTC().Add(time.Hour)
@@ -87,11 +87,11 @@ func TestVaultCredsProvider_Retrieve(t *testing.T) {
 	s, addr, certPool, test_app_id, test_user_id := vaultmock.RunMockVault(t)
 	defer s.Close()
 	c := restclient.NewConfig().WithEndPoint(addr).WithCACertPool(certPool)
-	vconf := vault.Config{
+	vconf := vaultclient.Config{
 		SecretsPath:      Test_SecretsPath,
 		ReSTClientConfig: *c,
 	}
-	vcreds := vault.Credentials{
+	vcreds := vaultclient.Credentials{
 		UserID: test_user_id,
 		AppID:  test_app_id,
 	}
@@ -105,8 +105,8 @@ func TestVaultCredsProvider_Retrieve(t *testing.T) {
 		t.Logf("Error parsing test expiry time: %v", err)
 	}
 	cred := AWSCredential{
-		SecretAccessKey: Test_SecretAccessKey,
-		SessionToken:    Test_SessionToken,
+		secretAccessKey: Test_SecretAccessKey,
+		sessionToken:    Test_SessionToken,
 		AccessKeyId:     Test_AccessKeyId,
 		Expiration:      xt,
 	}
