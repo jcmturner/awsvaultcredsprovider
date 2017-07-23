@@ -22,7 +22,7 @@ type AWSCredential struct {
 	AccessKeyId     string
 	secretAccessKey string
 	sessionToken    string
-	mFASerialNumber string
+	MFASerialNumber string
 	mFASecret       string
 	Expiration      time.Time
 	TTL             int64
@@ -71,7 +71,7 @@ func (p *VaultCredsProvider) SetTTL(ttl int64) *VaultCredsProvider {
 }
 
 func (p *VaultCredsProvider) WithMFA(serial, secret string) *VaultCredsProvider {
-	p.Credential.mFASerialNumber = serial
+	p.Credential.MFASerialNumber = serial
 	p.Credential.mFASecret = secret
 	return p
 }
@@ -81,7 +81,7 @@ func (p *VaultCredsProvider) Retrieve() (credentials.Value, error) {
 	if err != nil {
 		return credentials.Value{}, err
 	}
-	if p.Credential.mFASecret != "" && p.Credential.mFASerialNumber != "" {
+	if p.Credential.mFASecret != "" && p.Credential.MFASerialNumber != "" {
 		// We have an MFA so we will get a session to be able to support calls where MFA is required.
 		err := p.getSessionCredentials()
 		if err != nil {
@@ -115,7 +115,7 @@ func (p *VaultCredsProvider) getSessionCredentials() error {
 		d = p.Credential.TTL
 	}
 	params.SetDurationSeconds(d).
-		SetSerialNumber(p.Credential.mFASerialNumber).
+		SetSerialNumber(p.Credential.MFASerialNumber).
 		SetTokenCode(OTP)
 	result, err := svc.GetSessionTokenWithContext(ctx, params)
 	if err != nil {
@@ -148,7 +148,7 @@ func (p *VaultCredsProvider) Store() error {
 		"AccessKeyID":     p.Credential.AccessKeyId,
 		"SecretAccessKey": p.Credential.secretAccessKey,
 		"SessionToken":    p.Credential.sessionToken,
-		"MFASerialNumber": p.Credential.mFASerialNumber,
+		"MFASerialNumber": p.Credential.MFASerialNumber,
 		"MFASecret":       p.Credential.mFASecret,
 		"Expiration":      p.Credential.Expiration,
 		"TTL":             p.Credential.TTL,
@@ -171,7 +171,7 @@ func (p *VaultCredsProvider) Read() error {
 		p.Credential.sessionToken = v.(string)
 	}
 	if v, ok := m["MFASerialNumber"]; ok {
-		p.Credential.mFASerialNumber = v.(string)
+		p.Credential.MFASerialNumber = v.(string)
 	}
 	if v, ok := m["MFASecret"]; ok {
 		p.Credential.mFASecret = v.(string)
@@ -192,4 +192,8 @@ func (p *VaultCredsProvider) Read() error {
 		}
 	}
 	return nil
+}
+
+func (p *VaultCredsProvider) Delete() error {
+	return p.VaultClient.Delete(p.Arn)
 }
