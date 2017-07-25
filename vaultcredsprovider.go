@@ -28,10 +28,23 @@ type AWSCredential struct {
 	TTL             int64
 }
 
+func (c *AWSCredential) GetSecretAccessKey() string {
+	return c.secretAccessKey
+}
+
+func (c *AWSCredential) GetSessionToken() string {
+	return c.sessionToken
+}
+
+func (c *AWSCredential) GetMFASecret() string {
+	return c.mFASecret
+}
+
 type VaultCredsProvider struct {
 	VaultClient *vaultclient.Client
 	Arn         string
 	Credential  AWSCredential
+	reloadAfter time.Time
 }
 
 func NewVaultCredsProvider(arn string, conf vaultclient.Config, creds vaultclient.Credentials) (*VaultCredsProvider, error) {
@@ -62,6 +75,9 @@ func (p *VaultCredsProvider) SetSessionToken(s string) *VaultCredsProvider {
 
 func (p *VaultCredsProvider) SetExpiration(t time.Time) *VaultCredsProvider {
 	p.Credential.Expiration = t
+	if p.reloadAfter.After(t) || p.reloadAfter.IsZero() {
+		p.reloadAfter = t
+	}
 	return p
 }
 
@@ -137,7 +153,7 @@ func (p *VaultCredsProvider) IsExpired() bool {
 	if p.Credential.TTL < 0 {
 		return true
 	}
-	if time.Now().UTC().After(p.Credential.Expiration) {
+	if time.Now().UTC().After(p.reloadAfter) {
 		return true
 	}
 	return false
@@ -180,6 +196,7 @@ func (p *VaultCredsProvider) Read() error {
 		if p.Credential.Expiration, err = time.Parse(time.RFC3339, v.(string)); err != nil {
 			p.Credential.Expiration = time.Now().UTC()
 		}
+		p.reloadAfter = p.Credential.Expiration
 	}
 	if v, ok := m["TTL"]; ok {
 		if p.Credential.TTL, err = v.(json.Number).Int64(); err != nil {
@@ -188,7 +205,7 @@ func (p *VaultCredsProvider) Read() error {
 		}
 		t := time.Now().UTC().Add(time.Duration(p.Credential.TTL) * time.Second)
 		if p.Credential.Expiration.After(t) || p.Credential.Expiration.IsZero() {
-			p.Credential.Expiration = t
+			p.reloadAfter = t
 		}
 	}
 	return nil

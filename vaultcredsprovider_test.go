@@ -75,9 +75,9 @@ func TestVaultCredsProvider_IsExpired(t *testing.T) {
 		sessionToken:    Test_SessionToken,
 		AccessKeyId:     Test_AccessKeyId,
 	}
-	p.Credential.Expiration = time.Now().UTC().Add(time.Hour)
+	p.SetExpiration(time.Now().UTC().Add(time.Hour))
 	assert.False(t, p.IsExpired(), "IsExpired stating credential is expired when it isn't")
-	p.Credential.Expiration = time.Now().UTC().Add(time.Hour * -1)
+	p.SetExpiration(time.Now().UTC().Add(time.Hour * -1))
 	assert.True(t, p.IsExpired(), "IsExpired does not recognise credential is expired")
 	p.Credential.TTL = -1
 	assert.True(t, p.IsExpired(), "IsExpired should always be true when TTL < 0")
