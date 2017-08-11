@@ -42,6 +42,7 @@ func (c *AWSCredential) GetMFASecret() string {
 
 type VaultCredsProvider struct {
 	VaultClient *vaultclient.Client
+	Name        string
 	Arn         string
 	Credential  AWSCredential
 	reloadAfter time.Time
@@ -161,6 +162,7 @@ func (p *VaultCredsProvider) IsExpired() bool {
 
 func (p *VaultCredsProvider) Store() error {
 	m := map[string]interface{}{
+		"Name":            p.Name,
 		"AccessKeyID":     p.Credential.AccessKeyId,
 		"SecretAccessKey": p.Credential.secretAccessKey,
 		"SessionToken":    p.Credential.sessionToken,
@@ -176,6 +178,9 @@ func (p *VaultCredsProvider) Read() error {
 	m, err := p.VaultClient.Read(p.Arn)
 	if err != nil {
 		return err
+	}
+	if v, ok := m["Name"]; ok {
+		p.Name = v.(string)
 	}
 	if v, ok := m["AccessKeyID"]; ok {
 		p.Credential.AccessKeyId = v.(string)
