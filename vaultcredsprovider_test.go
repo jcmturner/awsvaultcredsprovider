@@ -19,7 +19,7 @@ const (
 )
 
 func TestVaultCredsProvider_StoreAndReadBack(t *testing.T) {
-	s, addr, certPool, test_app_id, test_user_id := vaultmock.RunMockVault(t)
+	s, addr, certPool, _, test_app_id, test_user_id := vaultmock.RunMockVault(t)
 	defer s.Close()
 	c := restclient.NewConfig().WithEndPoint(addr).WithCACertPool(certPool)
 	vconf := vaultclient.Config{
@@ -84,7 +84,7 @@ func TestVaultCredsProvider_IsExpired(t *testing.T) {
 }
 
 func TestVaultCredsProvider_Retrieve(t *testing.T) {
-	s, addr, certPool, test_app_id, test_user_id := vaultmock.RunMockVault(t)
+	s, addr, certPool, _, test_app_id, test_user_id := vaultmock.RunMockVault(t)
 	defer s.Close()
 	c := restclient.NewConfig().WithEndPoint(addr).WithCACertPool(certPool)
 	vconf := vaultclient.Config{
