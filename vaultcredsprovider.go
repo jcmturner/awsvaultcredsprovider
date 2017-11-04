@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/jcmturner/gootp"
 	"github.com/jcmturner/vaultclient"
+	gootp "gopkg.in/jcmturner/gootp.v1"
 	"time"
 )
 
@@ -121,7 +121,7 @@ func (p *VaultCredsProvider) getSessionCredentials() error {
 
 	ctx := context.Background()
 
-	OTP, _, err := gootp.GetTOTPNow(p.Credential.mFASecret, sha1.New, 6)
+	OTP, _, err := gootp.TOTPNow(p.Credential.mFASecret, sha1.New, 6)
 	if err != nil {
 		return err
 	}
